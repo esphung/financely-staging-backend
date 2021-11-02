@@ -1,15 +1,11 @@
-// require('dotenv').config();
-const express = require("express");
+const express = require('express');
 const server = express();
+const morgan = require('morgan');
 
-const morgan = require("morgan");
+// routes
+const public = require('public');
 
-// route imports
-const public = require("public");
-
-server.use(morgan("dev"));
-
-// use routes
-server.use("/", public);
+server.use(morgan('dev'));
+server.use('/', public);
 
 module.exports = server;
