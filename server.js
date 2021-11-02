@@ -9,7 +9,7 @@ const public = require("public");
 
 server.use(morgan("dev"));
 
-// routes
+// use routes
 server.use("/", public);
 
 module.exports = server;
