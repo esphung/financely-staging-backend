@@ -4,18 +4,27 @@ const bodyParser = require('body-parser');
 
 router.use(bodyParser.json());
 
-router.get('/', (req, res) => {
-  res.send('Hello World!');
+const knex = require("knex")({
+  client: "mysql",
+  connection: {
+    host: process.env.DB_HOST, // 127.0.0.1 <= local
+    port: process.env.DB_PORT,
+    user: process.env.DB_USERNAME, // <= root
+    password: process.env.DB_PASSWORD, // <= password
+    database: process.env.DB_DATABASE, // <= mydb
+  },
 });
 
-router.post('/authenticate', (req, res) => {
-  console.log('req.body: ', req.body);
-  res.json({ success: true, data: { authenticated: true } });
-});
+const listTable = (table) =>
+  knex(table)
+    .orderBy('id', 'desc')
+    .then((rows) => rows)
+    .catch((err) => err);
 
-router.post('/token', (req, res) => {
-  const createToken = () => 'token_' + Math.random().toString(36).substr(2, 9);
-  res.json({ success: true, data: { token: createToken() } });
-});
+
+router.get('/:table', ({ params }, res) => listTable(params?.table)
+  .then((result) => res.jsonp(result)));
+
+router.get('/', (req, res) => res.send('OK'));
 
 module.exports = router;
