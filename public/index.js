@@ -4,8 +4,8 @@ const bodyParser = require('body-parser');
 
 router.use(bodyParser.json());
 
-const knex = require("knex")({
-  client: "mysql",
+const knex = require('knex')({
+  client: 'mysql',
   connection: {
     host: process.env.DB_HOST, // 127.0.0.1 <= local
     port: process.env.DB_PORT,
@@ -21,9 +21,9 @@ const listTable = (table) =>
     .then((rows) => rows)
     .catch((err) => err);
 
-
-router.get('/:table', ({ params }, res) => listTable(params?.table)
-  .then((result) => res.jsonp(result)));
+router.get('/:table', ({ params }, res) =>
+  listTable(params?.table).then((result) => res.jsonp(result)),
+);
 
 router.get('/', (req, res) => res.send('OK'));
 
