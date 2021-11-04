@@ -16,17 +16,16 @@ const knex = require('knex')(config);
 const express = require('express');
 const router = express.Router();
 
-const listTable = () => {
-  return knex('users')
+const listTable = () =>
+  knex('users')
     .orderBy('id', 'desc')
     .then((rows) => rows)
     .catch((err) => err);
-};
 
 router.get('/', ({ params }, res) =>
-  listTable().then((result) => res.jsonp(result)),
+  listTable()
+    .then((result) => res.jsonp(result))
+    .catch((err) => res.jsonp(err)),
 );
-
-// router.get('/', (req, res) => res.send('OK'));
 
 module.exports = router;
