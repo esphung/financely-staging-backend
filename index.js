@@ -1,7 +1,7 @@
 require('app-module-path').addPath(__dirname);
 
 require('dotenv').config();
-console.log('process.env.NODE_ENV:', process.env.NODE_ENV);
+console.log('process.env.NODE_ENV: ', process.env.NODE_ENV);
 
 const server = require('./server');
 

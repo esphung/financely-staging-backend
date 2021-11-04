@@ -3,10 +3,11 @@ const server = express();
 const morgan = require('morgan');
 
 // routes
-// const public = require('public');
+const users = require('users');
 
 server.use(morgan('dev'));
-// server.use('/', public);
+
+server.use('/users', users);
 
 server.get('/', (req, res) => res.send('OK'))
 
