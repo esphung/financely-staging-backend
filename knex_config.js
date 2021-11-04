@@ -1,3 +1,13 @@
+// AWS
+// un: admin
+// pw: SecureP......
+
+// GOOGLE
+// un: root
+// pw: SecureP......
+
+
+
 let config = {
   client: 'mysql',
   connection: {
