@@ -22,10 +22,20 @@ const listTable = () =>
     .then((rows) => rows)
     .catch((err) => err);
 
-router.get('/', ({ params }, res) =>
+router.get('/all', ({ params }, res) =>
   listTable()
-    .then((result) => res.jsonp(result))
-    .catch((err) => res.jsonp(err)),
+    .then((result) => res.jsonp({ result }))
+    .catch((err) => res.jsonp({ err })),
 );
+
+router.get('/', (req, res) => {
+  var ip = req?.headers?.['x-forwarded-for'] ||
+     req?.socket?.remoteAddress ||
+     null;
+
+  res.jsonp({
+    ip, // : req?.socket?.remoteAddress
+  });
+});
 
 module.exports = router;
