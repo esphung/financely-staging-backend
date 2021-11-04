@@ -6,8 +6,6 @@
 // un: root
 // pw: SecureP......
 
-
-
 let config = {
   client: 'mysql',
   connection: {
