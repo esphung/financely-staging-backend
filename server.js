@@ -20,9 +20,9 @@ const sql = require('mssql');
 const sqlConfig = {
 	user: process.env.RDS_USERNAME,
 	password: process.env.RDS_PASSWORD,
-	database: 'ebdb',
-	server: 'aa93w2gyehkwsk.ct84h08hzrs8.us-east-2.rds.amazonaws.com',
-	port: 3306,
+	database: process.env.RDS_DB_NAME,
+	server: process.env.RDS_HOSTNAME,
+	port: process.env.RDS_PORT,
 	pool: {
 		max: 10,
 		min: 0,
