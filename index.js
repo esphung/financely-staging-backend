@@ -1,3 +1,6 @@
+const SALT = 'ALL YOU CAN EAT';
+global.salt = SALT
+
 require('app-module-path').addPath(__dirname);
 
 require('dotenv').config();
