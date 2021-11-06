@@ -16,25 +16,71 @@ const UsersController = require('controllers/UsersController');
 const randomMath = () => Math.random().toString(36).substr(2); // remove `0.`
 const generateToken = () => randomMath() + randomMath(); // "bnh5yzdirjinqaorq0ox1tf383nb3xr"
 
+const USER_STATUS = require('data/USER_STATUS');
+const DESTINATION = require('data/DESTINATION');
+
 async function authenticateLogin(credentials) {
   let temp = {
     success: false,
     data: { token: null },
     message: 'We could not authenticate you',
+    destination: DESTINATION.AUTHSTACK, // 'APPSTACK', 'SIGNUP', 'VERIFICATION'
+    status: USER_STATUS.ANONYMOUS,
   };
 
   let user = await UsersController.selectRecord(credentials);
 
-  let token = !!user?.verified ? generateToken() : null;
-  if (!user.verified) temp = { ...temp, message: "You aren't verified yet." };
-  console.log({ user, token, credentials });
-  if (user && token) {
-    temp = await UsersController.updateRecord({ ...user, token }).then((succ) => ({
+  if (!user) {
+    // no user
+    temp = {
       ...temp,
-      message: 'You were authenticated!',
-      success: !!token && !!succ,
-      data: { token },
-    }));
+      message: "We don't know you, yet",
+    };
+  } else if (!!user?.status && user?.status !== USER_STATUS.VERIFIED) {
+    // user not yet verified
+
+    switch (user?.status) {
+      case USER_STATUS.SUBMITTED: {
+        temp = {
+          ...temp,
+          message: 'Your not verified, yet',
+          destination: DESTINATION.VERIFICATION,
+          status: USER_STATUS.SUBMITTED,
+        };
+        break;
+      }
+      case USER_STATUS.ANONYMOUS: {
+        temp = {
+          ...temp,
+          message: "Sign up first, please",
+          destination: DESTINATION.SIGNUP,
+          status: USER_STATUS.ANONYMOUS,
+        };
+        break;
+      }
+      default: {
+        // statements_def
+        console.log('user?.status: ', user?.status);
+        break;
+      }
+    }
+  } else {
+    // returning, verified user
+    let token = generateToken();
+
+    let result;
+    result = await UsersController.updateRecord({ ...user, token })
+      .then((succ) => ({
+        ...temp,
+        message: 'Welcome, back!',
+        success: !!succ,
+        data: { token },
+        destination: DESTINATION.APPSTACK,
+        status: USER_STATUS.VERIFIED,
+      }))
+      .catch((err) => ({ err, success: false }));
+    // console.log('result: ', result);
+    temp = { ...temp, ...result };
   }
   return temp;
 }
@@ -114,7 +160,7 @@ const listUsers = () =>
     .then((rows) => rows)
     .catch((err) => err);
 
-router.post('/', (req, res) => {
+router.post('/login', (req, res) => {
   console.log('req.body: ', req.body);
   authenticateLogin(req.body)
     .then((result) => res.jsonp({ ...result }))
