@@ -14,171 +14,90 @@ router.use(bodyParser.json());
 const UsersController = require('controllers/UsersController');
 
 const randomMath = () => Math.random().toString(36).substr(2); // remove `0.`
-const generateToken = () => randomMath() + randomMath(); // "bnh5yzdirjinqaorq0ox1tf383nb3xr"
+const generateToken = () => randomMath() + randomMath(); //
 
-const USER_STATUS = require('data/USER_STATUS');
-const DESTINATION = require('data/DESTINATION');
+async function login(credentials) {
+  const isValidUser = (user) => {
+    return (
+      user?.password === credentials?.password &&
+      user?.username?.toLowerCase() === credentials?.username?.toLowerCase()
+    );
+  };
 
-async function authenticateLogin(credentials) {
   let temp = {
     success: false,
     data: { token: null },
-    message: 'We could not authenticate you',
-    destination: DESTINATION.AUTHSTACK, // 'APPSTACK', 'SIGNUP', 'VERIFICATION'
-    status: USER_STATUS.ANONYMOUS,
+    message: null,
   };
+  let user = await UsersController.selectRecord({ username: credentials?.username });
+  console.log('user: ', user);
+  if (user) {
+    if (isValidUser(user)) {
+      // returning, verified user
+      let token = generateToken();
 
-  let user = await UsersController.selectRecord(credentials);
-
-  if (!user) {
-    // no user
-    temp = {
-      ...temp,
-      message: "We don't know you, yet",
-    };
-  } else if (!!user?.status && user?.status !== USER_STATUS.VERIFIED) {
-    // user not yet verified
-
-    switch (user?.status) {
-      case USER_STATUS.SUBMITTED: {
-        temp = {
+      let result = await UsersController.updateRecord({ ...user, token })
+        .then((succ) => ({
           ...temp,
-          message: 'Your not verified, yet',
-          destination: DESTINATION.VERIFICATION,
-          status: USER_STATUS.SUBMITTED,
-        };
-        break;
-      }
-      case USER_STATUS.ANONYMOUS: {
-        temp = {
-          ...temp,
-          message: "Sign up first, please",
-          destination: DESTINATION.SIGNUP,
-          status: USER_STATUS.ANONYMOUS,
-        };
-        break;
-      }
-      default: {
-        // statements_def
-        console.log('user?.status: ', user?.status);
-        break;
-      }
+          message: 'Welcome, back!',
+          success: !!succ,
+          data: { token, key: user?.chef_id },
+        }))
+        .catch((err) => {
+          temp = { ...temp, err };
+          return temp;
+        });
+      temp = { ...temp, ...result };
+    } else {
+      temp = { ...temp, message: 'Credentials invalid' };
     }
   } else {
-    // returning, verified user
-    let token = generateToken();
-
-    let result;
-    result = await UsersController.updateRecord({ ...user, token })
-      .then((succ) => ({
-        ...temp,
-        message: 'Welcome, back!',
-        success: !!succ,
-        data: { token },
-        destination: DESTINATION.APPSTACK,
-        status: USER_STATUS.VERIFIED,
-      }))
-      .catch((err) => ({ err, success: false }));
-    // console.log('result: ', result);
-    temp = { ...temp, ...result };
+    temp = { ...temp, message: 'User not found' };
   }
   return temp;
 }
 
-async function exchangeTokenForAcct({ token }) {
-  let temp = { success: false, data: null };
-  let user = await UsersController.selectRecord({ token });
-  return { success: !!user, data: user };
-}
-async function signOutSession(data) {
-  let temp = { success: false };
-  // check if user logged in already
-  let { token: foundToken, chef_id: foundChefId } =
-    await UsersController.selectRecord(data);
-  console.log({ foundToken, foundChefId });
-
-  if (foundChefId === data.chef_id && !!foundToken) {
-    // unset account token
-    let token = null;
-    let result = await UsersController.updateRecord({ ...data, token });
-    temp = { ...temp, success: !!result };
-  }
-  return temp;
-}
-
-async function registerNewUser(data) {
+async function signup(data) {
   let chef_id = hashids.encode(String(Date.now()));
   let temp = { success: false };
   let params = { ...data, chef_id };
-  let resp = await UsersController.insertRecord(params);
-
-  console.log({ resp });
-  temp = { ...temp, success: resp.length > 0 && !resp.err };
-
+  let result = await UsersController.insertRecord(params);
+  // console.log({ result });
+  let success = result.length > 0 && !result.err;
+  temp = {
+    ...temp,
+    message: `Signup ${success ? 'successful' : 'failed'}`,
+    success,
+    params,
+  };
   return temp;
 }
 
-let testData = {
-  username: 'test9876@chef.com',
-  password: 'password',
-};
-async function main() {
-  let signup = await registerNewUser(testData);
-  console.log({ signup });
-  return;
+// async function main() {
+//   let signup = await signUpUser({
+//     username: 'test@1234chef.com',
+//     password: 'password',
+//   });
+//   console.log({signup})
+//   return
+// }
 
-  // LOGIN WITH EMAIL + PASSWORD
-  let signin = await authenticateLogin({
-    username: 'username',
-    password: 'password',
-  });
-  const {
-    message,
-    success,
-    data: { token },
-  } = signin;
-  if (!success) return;
-
-  // GET USER INFO WITH TOKEN
-  let { data: user } = await exchangeTokenForAcct({ token });
-  console.log({ user });
-
-  let meal = await storeMeal({ ...test_recipe, chef_id: user.chef_id });
-  console.log({ meal });
-
-  // SIGNOUT AND REMOVE TOKEN
-  let signout = await signOutSession({
-    token: userData.token,
-    chef_id: userData.chef_id,
-  });
-  console.log({ signout });
-}
-
-const listUsers = () =>
-  knex('users')
-    .orderBy('id', 'desc')
-    .then((rows) => rows)
-    .catch((err) => err);
-
-router.post('/login', (req, res) => {
-  console.log('req.body: ', req.body);
-  authenticateLogin(req.body)
-    .then((result) => res.jsonp({ ...result }))
+router.post('/login', ({ body }, res) =>
+  login(body)
+    .then((result) => res.status(200).jsonp(result))
     .catch((err) => {
       console.log('err: ', err);
-      res.jsonp({ success: false, message: 'We cannot log you in' });
+      res.status(500).jsonp({ success: false, err, message: 'We cannot log you in' });
+    }),
+);
+
+router.post('/signup', ({ body }, res) => {
+  signup(body)
+    .then((result) => res.status(200).jsonp(result))
+    .catch((err) => {
+      console.log('err: ', err);
+      res.status(500).jsonp({ success: false, err, message: 'We cannot sign you up' });
     });
 });
-
-// router.get('/', ({ params }, res) => {
-//   res.jsonp({ ...body });
-//   // return;
-//   listUsers()
-//     .then((result) => res.jsonp({ params }))
-//     .catch((err) => {
-//       console.log('err: ', err);
-//       res.jsonp({ success: false, err });
-//     });
-// });
 
 module.exports = router;

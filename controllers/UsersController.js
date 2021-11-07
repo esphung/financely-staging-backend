@@ -16,7 +16,7 @@ const insertRecord = (params) => {
       .insert(params)
       // .onConflict('username','chef_id')
       // .merge()
-      .then((succ) => succ)
+      .then((result) => result)
       .catch((err) => ({ err }))
   );
 };
