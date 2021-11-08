@@ -73,15 +73,6 @@ async function signup(data) {
   return temp;
 }
 
-// async function main() {
-//   let signup = await signUpUser({
-//     username: 'test@1234chef.com',
-//     password: 'password',
-//   });
-//   console.log({signup})
-//   return
-// }
-
 router.post('/login', ({ body }, res) =>
   login(body)
     .then((result) => res.status(200).jsonp(result))

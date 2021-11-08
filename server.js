@@ -5,11 +5,13 @@ const morgan = require('morgan');
 // routes
 const users = require('users');
 const authentication = require('authentication');
+const recipes = require('recipes');
 
 server.use(morgan('dev'));
 
 server.use('/users', users);
 server.use('/authentication', authentication);
+server.use('/recipes', recipes);
 
 // server.get('/', (req, res) => res.send('OK'));
 
