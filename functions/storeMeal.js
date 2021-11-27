@@ -12,6 +12,7 @@ const UsersController = require('controllers/UsersController');
 const RecipesController = require('controllers/RecipesController');
 const FoodsController = require('controllers/FoodsController');
 const IngredientsController = require('controllers/IngredientsController');
+const DirectionsController = require('controllers/DirectionsController');
 // var faker = require('faker');
 
 // meals and sauces
@@ -39,20 +40,23 @@ const test_recipe = {
 };
 
 async function storeMeal(recipe) {
-  let temp = { success: false };
-  let { ingredients, ...rest } = recipe;
+  let temp = { success: false, message: '' };
+  let { ingredients, directions, ...rest } = recipe;
   let recipe_id = hashids.encode(String(Date.now()));
   let params = {
     ...rest,
     recipe_id,
   };
   let recipeResult = await RecipesController.insertRecord(params);
-  let newRecipe = await RecipesController.selectRecord({recipe_id});
+  let newRecipe = await RecipesController.selectRecord({ recipe_id });
   temp = {
     ...temp,
     success: !!newRecipe && recipeResult.length > 0,
     data: { ...recipe, ...newRecipe },
   };
+
+  // console.log('recipe: ', recipe);
+
   if (recipe?.ingredients?.length > 0) {
     const fieldsToInsert = ingredients?.map((ingredient, index) => ({
       ...ingredient,
@@ -60,14 +64,37 @@ async function storeMeal(recipe) {
       chef_id: recipe.chef_id,
       ingredient_id: hashids.encode(String(Date.now() + index)),
     }));
-    console.log('fieldsToInsert: ', fieldsToInsert);
-    let newIngredientsResult = await IngredientsController.insertRecord(fieldsToInsert);
+    // console.log('fieldsToInsert: ', fieldsToInsert);
+    let newIngredientsResult = await IngredientsController.insertRecord(
+      fieldsToInsert,
+    );
 
-    temp = { ...temp, success: true };
+    temp = {
+      ...temp,
+      success: true,
+      message: (temp.message += 'Added ingredients.'),
+    };
   }
 
-  console.log('temp: ', temp);
+  if (recipe?.directions?.length > 0) {
+    const fieldsToInsert = directions?.map((direction, index) => ({
+      ...direction,
+      num: index,
+      recipe_id,
+      chef_id: recipe.chef_id,
+      direction_id: hashids.encode(String(Date.now() + index)),
+    }));
+    // console.log('fieldsToInsert: ', fieldsToInsert);
+    let newDirectionsResult = await DirectionsController.insertRecord(fieldsToInsert);
+    // console.log('newDirectionsResult: ', newDirectionsResult);
 
+    temp = {
+      ...temp,
+      success: true,
+      message: (temp.message += ' Added directions.'),
+    };
+  }
+  // console.log('temp: ', temp);
   return temp;
 }
 

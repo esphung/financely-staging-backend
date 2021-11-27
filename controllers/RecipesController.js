@@ -52,6 +52,7 @@ const selectRecord = (query) =>
 const listSamplesBy = (params) =>
   knex('recipes')
     .select(
+      'recipes.id',
       'recipes.name',
       'recipes.description',
       'recipes.minutes',
