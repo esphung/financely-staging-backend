@@ -13,6 +13,9 @@ server.use('/users', users);
 server.use('/authentication', authentication);
 server.use('/recipes', recipes);
 
+// stored images to display publicly
+server.use(express.static('public/images'))
+
 // server.get('/', (req, res) => res.send('OK'));
 
 require('dotenv').config();
