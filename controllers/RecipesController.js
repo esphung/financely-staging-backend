@@ -55,6 +55,7 @@ const listSamplesBy = (params) =>
       'recipes.id',
       'recipes.name',
       'recipes.description',
+      'recipes.created',
       'recipes.minutes',
       'recipes.recipe_id',
       'recipes.rating',
