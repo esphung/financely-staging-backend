@@ -13,7 +13,7 @@ const insertRecord = (params) => {
   // console.log({ params });
   return (
     knex('images')
-      .insert(params)
+      .insert({...params, image_id: `image_${hashids.encode(String(Date.now()))}`})
       // .onConflict('username','chef_id')
       // .merge()
       .then((result) => result)
