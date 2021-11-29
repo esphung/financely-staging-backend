@@ -48,9 +48,3 @@ module.exports = {
   selectRecord,
   updateRecord,
 };
-
-async function main () {
-  // body...
-  console.log('await listAll(): ', await listAll());
-}
-main()

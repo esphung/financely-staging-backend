@@ -10,7 +10,7 @@ const listAll = () =>
     .catch((err) => err);
 
 const insertRecord = (params) => {
-  console.log(params);
+  // console.log({ params });
   return (
     knex('users')
       .insert(params)
@@ -21,8 +21,7 @@ const insertRecord = (params) => {
   );
 };
 
-const updateRecord = ({ chef_id, ...rest }) => {
-  // console.log({id,chef_id,})
+const updateRecord = ({ chef_id = null, ...rest }) => {
   return (
     knex('users')
       // .where({id})
