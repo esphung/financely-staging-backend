@@ -40,6 +40,7 @@ const test_recipe = {
 };
 
 async function storeMeal(recipe) {
+  // console.log('recipe: ', recipe);
   let temp = { success: false, message: '' };
   let { ingredients, directions, ...rest } = recipe;
   let recipe_id = hashids.encode(String(Date.now()));
@@ -54,8 +55,6 @@ async function storeMeal(recipe) {
     success: !!newRecipe && recipeResult.length > 0,
     data: { ...recipe, ...newRecipe },
   };
-
-  // console.log('recipe: ', recipe);
 
   if (recipe?.ingredients?.length > 0) {
     const fieldsToInsert = ingredients?.map((ingredient, index) => ({
