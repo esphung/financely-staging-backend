@@ -4,9 +4,22 @@ var hashids = new Hashids(global.salt, 16);
 const knexfile = require('knex_config');
 const knex = require('knex')(knexfile);
 
-const listAll = () =>
+const listAll = ({ offset, limit }) =>
   knex
     .from('recipes')
+    .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
+    .select(
+      'users.username',
+      'recipes.id',
+      'recipes.name',
+      'recipes.description',
+      'recipes.created',
+      'recipes.minutes',
+      'recipes.recipe_id',
+      'recipes.rating',
+      'recipes.difficulty',
+    )
+    .limit(limit).offset(offset)
     .orderBy('id', 'desc')
     .then((rows) => rows)
     .catch((err) => {

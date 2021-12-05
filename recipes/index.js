@@ -10,17 +10,44 @@ router.use(bodyParser.json());
 const RecipesController = require('controllers/RecipesController');
 const IngredientsController = require('controllers/IngredientsController');
 const DirectionsController = require('controllers/DirectionsController');
+const ImagesController = require('controllers/ImagesController');
 
 const storeMeal = require('functions/storeMeal');
 
-router.get('/', ({ params }, res) =>
-  RecipesController.listAll()
-    .then((result) => res.jsonp(result))
-    .catch((err) => {
-      console.log('err: ', err);
-      res.jsonp({ err });
-    }),
-);
+router.get('/', ({ query }, res) => {
+  const { offset = 0, limit = 10 } = query;
+  // console.log({offset});
+  RecipesController.listAll({ offset, limit }).then(async (rows) => {
+    let i = 0;
+    let arr = [];
+    for (i = 0; i < rows.length; i++) {
+      let temp = { ...rows[i] };
+      temp = await IngredientsController.selectSample({
+        recipe_id: temp.recipe_id,
+      }).then((ingredients) => ({ ...temp, ingredients }));
+
+      temp = await DirectionsController.selectSample({
+        recipe_id: temp.recipe_id,
+      }).then((directions) => ({ ...temp, directions }));
+
+      temp = await ImagesController.selectSample({
+        recipe_id: temp.recipe_id,
+      }).then((images) => ({ ...temp, images }));
+      // console.log('temp', temp);
+
+      arr[i] = temp;
+      // console.log('arr[i].id', arr[i].id);
+      // console.log('arr.length', arr.length);
+
+      let nextOffset = +offset + +arr.length; // Number(offset) + Number(arr.length)
+      // console.log('nextOffset', nextOffset)
+      if (i >= rows.length - 1 || !rows) {
+        res.jsonp({data:arr, nextOffset, success: true});
+        return;
+      }
+    }
+  });
+});
 
 router.get('/:chef_id', ({ params }, res) => {
   RecipesController.listSamplesBy(params)

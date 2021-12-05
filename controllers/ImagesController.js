@@ -42,9 +42,21 @@ const selectRecord = (query) =>
     .then((succ) => succ)
     .catch((err) => ({ err }));
 
+const selectSample = (query) =>
+  knex('images')
+    .select(
+      'images.id',
+      'images.url',
+      'images.recipe_id',
+    )
+    .where(query)
+    .then((succ) => succ)
+    .catch((err) => err);
+
 module.exports = {
   listAll,
   insertRecord,
   selectRecord,
   updateRecord,
+  selectSample,
 };
