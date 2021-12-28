@@ -14,9 +14,19 @@ const ImagesController = require('controllers/ImagesController');
 
 const storeMeal = require('functions/storeMeal');
 
+router.get('/counts', async ({ query }, res) => {
+  let recipesCountRes = await RecipesController.getCount();
+  res.jsonp({
+    success: true,
+    data: {
+      recipes: recipesCountRes?.count,
+    },
+  });
+});
+
 router.get('/', async ({ query }, res) => {
   const { offset = 0, limit = 10 } = query;
-  let countResult = await RecipesController.getCount()
+  let countResult = await RecipesController.getCount();
   // console.log('countResult', countResult)
   // console.log(countResult?.count);
   // console.log({offset});
