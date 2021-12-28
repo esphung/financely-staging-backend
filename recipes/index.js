@@ -14,10 +14,13 @@ const ImagesController = require('controllers/ImagesController');
 
 const storeMeal = require('functions/storeMeal');
 
-router.get('/', ({ query }, res) => {
+router.get('/', async ({ query }, res) => {
   const { offset = 0, limit = 10 } = query;
+  let countResult = await RecipesController.getCount()
+  // console.log('countResult', countResult)
+  // console.log(countResult?.count);
   // console.log({offset});
-  RecipesController.listAll({ offset, limit }).then(async (rows) => {
+  RecipesController.listAllPaginated({ offset, limit }).then(async (rows) => {
     let i = 0;
     let arr = [];
     for (i = 0; i < rows.length; i++) {
@@ -42,7 +45,13 @@ router.get('/', ({ query }, res) => {
       let nextOffset = +offset + +arr.length; // Number(offset) + Number(arr.length)
       // console.log('nextOffset', nextOffset)
       if (i >= rows.length - 1 || !rows) {
-        res.jsonp({data:arr, nextOffset, success: true});
+        res.jsonp({
+          data: arr,
+          nextOffset,
+          success: true,
+          count: countResult?.count,
+          hasMore: !(nextOffset >= countResult?.count),
+        });
         return;
       }
     }

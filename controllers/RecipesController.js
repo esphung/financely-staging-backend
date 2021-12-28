@@ -4,9 +4,20 @@ var hashids = new Hashids(global.salt, 16);
 const knexfile = require('knex_config');
 const knex = require('knex')(knexfile);
 
-const listAll = ({ offset, limit }) =>
+const getCount = () => knex
+  .from('recipes')
+  .count('id as count')
+  .first()
+  .then((result) => result)
+    .catch((err) => {
+      err;
+    });
+
+
+const listAllPaginated = ({ offset, limit }) =>
   knex
     .from('recipes')
+    // .count('id as CNT')s
     .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
     .select(
       'users.username',
@@ -80,7 +91,8 @@ const listSamplesBy = (params) =>
     .catch((err) => ({ err }));
 
 module.exports = {
-  listAll,
+  getCount,
+  listAllPaginated,
   insertRecord,
   selectRecord,
   updateRecord,
