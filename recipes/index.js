@@ -38,10 +38,11 @@ router.get('/counts', async ({ query }, res) => {
   });
 });
 
-router.get('/', async ({ query }, res) => {
-  const { offset = 0, limit = 10, chef_id, visibility } = query;
+router.get('/feed', async ({ query }, res) => {
+  const { offset = 0, limit = 10, chef_id, visibility = 'PUBLIC', voided = 0 } = query;
   let countResult = await RecipesController.getCount({ chef_id, visibility });
-  RecipesController.listAllPaginated({
+  console.log(countResult)
+  RecipesController.listAllForFeed({
     offset: Number(offset),
     limit: Number(limit),
     chef_id,
@@ -55,6 +56,7 @@ router.get('/', async ({ query }, res) => {
           success: false,
           count: 0,
           hasMore: false,
+          limit,
         };
         // console.log(JSON.stringify(result, null, 2));
         res.jsonp(result);
@@ -91,6 +93,73 @@ router.get('/', async ({ query }, res) => {
               countResult?.count <= 0 ||
               rows?.length <= 0 ||
               !(nextOffset >= countResult?.count),
+            limit,
+          };
+          // console.log(JSON.stringify(result, null, 2));
+          res.jsonp(result);
+          return;
+        }
+      }
+    })
+    .catch((err) => {
+      console.log({ err });
+    });
+});
+router.get('/', async ({ query }, res) => {
+  const { offset = 0, limit = 10, chef_id, visibility } = query;
+  let countResult = await RecipesController.getCount({ chef_id, visibility });
+  RecipesController.listAllPaginated({
+    offset: Number(offset),
+    limit: Number(limit),
+    chef_id,
+    visibility,
+  })
+    .then(async (rows = []) => {
+      if (rows?.length <= 0) {
+        let result = {
+          data: [],
+          nextOffset: 0,
+          success: false,
+          count: 0,
+          hasMore: false,
+          limit,
+        };
+        // console.log(JSON.stringify(result, null, 2));
+        res.jsonp(result);
+      }
+      // console.log(rows.some(elem => elem.chef_id !== 'ab7NRbbrZd9JjNxo'))
+      let i = 0;
+      let arr = [];
+      for (i = 0; i < rows?.length; i++) {
+        let temp = { ...rows[i] };
+        temp = await IngredientsController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((ingredients) => ({ ...temp, ingredients }));
+
+        temp = await DirectionsController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((directions) => ({ ...temp, directions }));
+
+        temp = await ImagesController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((images) => ({ ...temp, images }));
+        // console.log('temp', temp);
+
+        arr[i] = temp;
+
+        let nextOffset = +offset + +arr.length;
+
+        if (i >= rows?.length - 1 || !rows) {
+          let result = {
+            data: arr,
+            nextOffset,
+            success: rows?.length > 0,
+            count: countResult?.count,
+            hasMore:
+              countResult?.count <= 0 ||
+              rows?.length <= 0 ||
+              !(nextOffset >= countResult?.count),
+            limit,
           };
           // console.log(JSON.stringify(result, null, 2));
           res.jsonp(result);

@@ -33,6 +33,7 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
     .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
     .select(
       'users.username',
+      'users.avatar',
       'recipes.id',
       'recipes.name',
       'recipes.description',
@@ -50,9 +51,33 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
     .then((rows) => rows)
     .catch((err) => err);
 
-const listAllBy = (params) =>
+const listAllForFeed = ({offset, limit, chef_id, visibility, ...params}) =>
   knex('recipes')
     .where({ ...params, voided: 0 })
+    .modify((queryBuilder) => {
+      if (chef_id) queryBuilder.where('recipes.chef_id', chef_id);
+    })
+    // .modify((queryBuilder) => {
+    //   if (visibility) queryBuilder.where('recipes.visibility', visibility);
+    // })
+    .where({ voided: 0, visibility: 'PUBLIC' })
+    .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
+    .select(
+      'users.username',
+      'users.avatar',
+      'recipes.id',
+      'recipes.name',
+      // 'recipes.description',
+      'recipes.created',
+      // 'recipes.minutes',
+      'recipes.recipe_id',
+      'recipes.chef_id',
+      // 'recipes.rating',
+      // 'recipes.difficulty',
+      // 'recipes.visibility',
+    )
+    .limit(limit)
+    .offset(offset)
     .orderBy('id', 'desc')
     .then((rows) => rows)
     .catch((err) => ({ err }));
@@ -74,6 +99,7 @@ const updateRecord = ({
   images,
   ingredients,
   username,
+  avatar,
   created,
   directions,
   recipe_id,
@@ -118,6 +144,6 @@ module.exports = {
   insertRecord,
   selectRecord,
   updateRecord,
-  listAllBy,
+  listAllForFeed,
   listSamplesBy,
 };
