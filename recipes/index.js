@@ -15,7 +15,7 @@ const ImagesController = require('controllers/ImagesController');
 const storeMeal = require('functions/storeMeal');
 
 router.get('/counts', async ({ query }, res) => {
-  let recipesCountRes = await RecipesController.getCount();
+  let recipesCountRes = await RecipesController.getCount(query);
   res.jsonp({
     success: true,
     data: {
@@ -26,51 +26,58 @@ router.get('/counts', async ({ query }, res) => {
 
 router.get('/', async ({ query }, res) => {
   const { offset = 0, limit = 10, chef_id, visibility } = query;
-  // console.log({chef_id});
-  // console.log('filtered', JSON.parse(filtered));
   let countResult = await RecipesController.getCount({chef_id, visibility});
-  // console.log('countResult', countResult)
-  // console.log(countResult?.count);
-  // console.log({offset});
-  RecipesController.listAllPaginated({ offset, limit, chef_id, visibility })
-    .then(async (rows) => {
-      // console.log('rows.length', rows.length);
+  RecipesController.listAllPaginated({ offset: Number(offset), limit:  Number(limit), chef_id, visibility })
+    .then(async (rows = []) => {
+      if (rows?.length <= 0) {
+        let result = {
+            data: [],
+            nextOffset: 0,
+            success: false,
+            count: 0,
+            hasMore: false,
+          }
+          // console.log(JSON.stringify(result, null, 2));
+          res.jsonp(result);
+      }
       // console.log(rows.some(elem => elem.chef_id !== 'ab7NRbbrZd9JjNxo'))
       let i = 0;
       let arr = [];
-      for (i = 0; i < rows.length; i++) {
+      for (i = 0; i < rows?.length; i++) {
         let temp = { ...rows[i] };
         temp = await IngredientsController.selectSample({
-          recipe_id: temp.recipe_id,
+          recipe_id: temp?.recipe_id,
         }).then((ingredients) => ({ ...temp, ingredients }));
 
         temp = await DirectionsController.selectSample({
-          recipe_id: temp.recipe_id,
+          recipe_id: temp?.recipe_id,
         }).then((directions) => ({ ...temp, directions }));
 
         temp = await ImagesController.selectSample({
-          recipe_id: temp.recipe_id,
+          recipe_id: temp?.recipe_id,
         }).then((images) => ({ ...temp, images }));
         // console.log('temp', temp);
 
         arr[i] = temp;
-        // console.log('arr[i].id', arr[i].id);
-        // console.log('arr.length', arr.length);
 
-        let nextOffset = +offset + +arr.length; // Number(offset) + Number(arr.length)
-        // console.log('nextOffset', nextOffset)
-        if (i >= rows.length - 1 || !rows) {
-          res.jsonp({
+        let nextOffset = +offset + +arr.length;
+
+        if (i >= rows?.length - 1 || !rows) {
+          let result = {
             data: arr,
             nextOffset,
-            success: true,
+            success: rows?.length > 0,
             count: countResult?.count,
-            hasMore: !(nextOffset >= countResult?.count),
-          });
+            hasMore: countResult?.count <= 0 || rows?.length <= 0 || !(nextOffset >= countResult?.count),
+          }
+          // console.log(JSON.stringify(result, null, 2));
+          res.jsonp(result);
           return;
         }
       }
-    });
+    }).catch((err) => {
+      console.log({err})
+    })
 });
 
 router.get('/:chef_id', ({ params }, res) => {
