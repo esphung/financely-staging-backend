@@ -4,7 +4,7 @@ var hashids = new Hashids(global.salt, 16);
 const knexfile = require('knex_config');
 const knex = require('knex')(knexfile);
 
-const getCount = ({chef_id, visibility}) =>
+const getCount = ({ chef_id, visibility }) =>
   knex
     .from('recipes')
     .modify((queryBuilder) => {
@@ -69,13 +69,22 @@ const insertRecord = (params) =>
       err;
     });
 
-const updateRecord = ({ id, recipe_id, ...rest }) =>
+const updateRecord = ({
+  id,
+  images,
+  ingredients,
+  username,
+  created,
+  directions,
+  recipe_id,
+  ...rest
+}) =>
   knex('recipes')
-    .where({ recipe_id })
     .update(rest)
+    .where({ recipe_id })
     .then((succ) => succ)
     .catch((err) => {
-      err;
+      return err;
     });
 
 const selectRecord = (query) =>

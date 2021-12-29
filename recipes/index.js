@@ -14,6 +14,20 @@ const ImagesController = require('controllers/ImagesController');
 
 const storeMeal = require('functions/storeMeal');
 
+router.put('/:recipe_id', ({ body, params }, res) => {
+  // console.log({body});
+  // console.log({params});
+  RecipesController.updateRecord({ ...body })
+    .then((result) => {
+      // console.log({result});
+      res.jsonp({ success: true, data: result });
+    })
+    .catch((err) => {
+      console.log({ err });
+      res.jsonp({ success: false, err });
+    });
+});
+
 router.get('/counts', async ({ query }, res) => {
   let recipesCountRes = await RecipesController.getCount(query);
   res.jsonp({
@@ -26,19 +40,24 @@ router.get('/counts', async ({ query }, res) => {
 
 router.get('/', async ({ query }, res) => {
   const { offset = 0, limit = 10, chef_id, visibility } = query;
-  let countResult = await RecipesController.getCount({chef_id, visibility});
-  RecipesController.listAllPaginated({ offset: Number(offset), limit:  Number(limit), chef_id, visibility })
+  let countResult = await RecipesController.getCount({ chef_id, visibility });
+  RecipesController.listAllPaginated({
+    offset: Number(offset),
+    limit: Number(limit),
+    chef_id,
+    visibility,
+  })
     .then(async (rows = []) => {
       if (rows?.length <= 0) {
         let result = {
-            data: [],
-            nextOffset: 0,
-            success: false,
-            count: 0,
-            hasMore: false,
-          }
-          // console.log(JSON.stringify(result, null, 2));
-          res.jsonp(result);
+          data: [],
+          nextOffset: 0,
+          success: false,
+          count: 0,
+          hasMore: false,
+        };
+        // console.log(JSON.stringify(result, null, 2));
+        res.jsonp(result);
       }
       // console.log(rows.some(elem => elem.chef_id !== 'ab7NRbbrZd9JjNxo'))
       let i = 0;
@@ -68,16 +87,20 @@ router.get('/', async ({ query }, res) => {
             nextOffset,
             success: rows?.length > 0,
             count: countResult?.count,
-            hasMore: countResult?.count <= 0 || rows?.length <= 0 || !(nextOffset >= countResult?.count),
-          }
+            hasMore:
+              countResult?.count <= 0 ||
+              rows?.length <= 0 ||
+              !(nextOffset >= countResult?.count),
+          };
           // console.log(JSON.stringify(result, null, 2));
           res.jsonp(result);
           return;
         }
       }
-    }).catch((err) => {
-      console.log({err})
     })
+    .catch((err) => {
+      console.log({ err });
+    });
 });
 
 router.get('/:chef_id', ({ params }, res) => {
