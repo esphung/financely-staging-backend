@@ -4,20 +4,26 @@ var hashids = new Hashids(global.salt, 16);
 const knexfile = require('knex_config');
 const knex = require('knex')(knexfile);
 
-const getCount = () => knex
-  .from('recipes')
-  .count('id as count')
-  .first()
-  .then((result) => result)
+const getCount = ({chef_id}) =>
+  knex
+    .from('recipes')
+    .modify((queryBuilder) => {
+      if (chef_id) queryBuilder.where('recipes.chef_id', chef_id);
+    })
+    .count('id as count')
+    .first()
+    .then((result) => result)
     .catch((err) => {
       err;
     });
 
-
-const listAllPaginated = ({ offset, limit }) =>
+const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
   knex
     .from('recipes')
-    // .count('id as CNT')s
+    .modify((queryBuilder) => {
+      if (chef_id) queryBuilder.where('recipes.chef_id', chef_id);
+      if (visibility) queryBuilder.where('recipes.visibility', visibility);
+    })
     .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
     .select(
       'users.username',
@@ -27,10 +33,12 @@ const listAllPaginated = ({ offset, limit }) =>
       'recipes.created',
       'recipes.minutes',
       'recipes.recipe_id',
+      'recipes.chef_id',
       'recipes.rating',
       'recipes.difficulty',
     )
-    .limit(limit).offset(offset)
+    .limit(limit)
+    .offset(offset)
     .orderBy('id', 'desc')
     .then((rows) => rows)
     .catch((err) => {

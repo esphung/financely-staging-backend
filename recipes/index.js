@@ -25,47 +25,52 @@ router.get('/counts', async ({ query }, res) => {
 });
 
 router.get('/', async ({ query }, res) => {
-  const { offset = 0, limit = 10 } = query;
-  let countResult = await RecipesController.getCount();
+  const { offset = 0, limit = 10, chef_id, visibility } = query;
+  // console.log({chef_id});
+  // console.log('filtered', JSON.parse(filtered));
+  let countResult = await RecipesController.getCount({chef_id, visibility});
   // console.log('countResult', countResult)
   // console.log(countResult?.count);
   // console.log({offset});
-  RecipesController.listAllPaginated({ offset, limit }).then(async (rows) => {
-    let i = 0;
-    let arr = [];
-    for (i = 0; i < rows.length; i++) {
-      let temp = { ...rows[i] };
-      temp = await IngredientsController.selectSample({
-        recipe_id: temp.recipe_id,
-      }).then((ingredients) => ({ ...temp, ingredients }));
+  RecipesController.listAllPaginated({ offset, limit, chef_id, visibility })
+    .then(async (rows) => {
+      // console.log('rows.length', rows.length);
+      // console.log(rows.some(elem => elem.chef_id !== 'ab7NRbbrZd9JjNxo'))
+      let i = 0;
+      let arr = [];
+      for (i = 0; i < rows.length; i++) {
+        let temp = { ...rows[i] };
+        temp = await IngredientsController.selectSample({
+          recipe_id: temp.recipe_id,
+        }).then((ingredients) => ({ ...temp, ingredients }));
 
-      temp = await DirectionsController.selectSample({
-        recipe_id: temp.recipe_id,
-      }).then((directions) => ({ ...temp, directions }));
+        temp = await DirectionsController.selectSample({
+          recipe_id: temp.recipe_id,
+        }).then((directions) => ({ ...temp, directions }));
 
-      temp = await ImagesController.selectSample({
-        recipe_id: temp.recipe_id,
-      }).then((images) => ({ ...temp, images }));
-      // console.log('temp', temp);
+        temp = await ImagesController.selectSample({
+          recipe_id: temp.recipe_id,
+        }).then((images) => ({ ...temp, images }));
+        // console.log('temp', temp);
 
-      arr[i] = temp;
-      // console.log('arr[i].id', arr[i].id);
-      // console.log('arr.length', arr.length);
+        arr[i] = temp;
+        // console.log('arr[i].id', arr[i].id);
+        // console.log('arr.length', arr.length);
 
-      let nextOffset = +offset + +arr.length; // Number(offset) + Number(arr.length)
-      // console.log('nextOffset', nextOffset)
-      if (i >= rows.length - 1 || !rows) {
-        res.jsonp({
-          data: arr,
-          nextOffset,
-          success: true,
-          count: countResult?.count,
-          hasMore: !(nextOffset >= countResult?.count),
-        });
-        return;
+        let nextOffset = +offset + +arr.length; // Number(offset) + Number(arr.length)
+        // console.log('nextOffset', nextOffset)
+        if (i >= rows.length - 1 || !rows) {
+          res.jsonp({
+            data: arr,
+            nextOffset,
+            success: true,
+            count: countResult?.count,
+            hasMore: !(nextOffset >= countResult?.count),
+          });
+          return;
+        }
       }
-    }
-  });
+    });
 });
 
 router.get('/:chef_id', ({ params }, res) => {
