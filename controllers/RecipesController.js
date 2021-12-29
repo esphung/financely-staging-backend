@@ -29,6 +29,7 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
     .modify((queryBuilder) => {
       if (visibility) queryBuilder.where('recipes.visibility', visibility);
     })
+    .where({ voided: 0 })
     .leftJoin('users', 'users.chef_id', 'recipes.chef_id')
     .select(
       'users.username',
