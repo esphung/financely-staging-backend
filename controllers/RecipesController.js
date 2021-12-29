@@ -42,6 +42,7 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
       'recipes.chef_id',
       'recipes.rating',
       'recipes.difficulty',
+      'recipes.visibility',
     )
     .limit(limit)
     .offset(offset)
