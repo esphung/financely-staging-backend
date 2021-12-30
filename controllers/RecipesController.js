@@ -44,6 +44,7 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
       'recipes.rating',
       'recipes.difficulty',
       'recipes.visibility',
+      'recipes.version',
     )
     .limit(limit)
     .offset(offset)
@@ -51,7 +52,7 @@ const listAllPaginated = ({ offset, limit, chef_id, visibility }) =>
     .then((rows) => rows)
     .catch((err) => err);
 
-const listAllForFeed = ({offset, limit, chef_id, visibility, ...params}) =>
+const listAllForFeed = ({offset, limit, chef_id, ...params}) =>
   knex('recipes')
     .where({ ...params, voided: 0 })
     .modify((queryBuilder) => {
@@ -75,6 +76,7 @@ const listAllForFeed = ({offset, limit, chef_id, visibility, ...params}) =>
       // 'recipes.rating',
       // 'recipes.difficulty',
       // 'recipes.visibility',
+      'recipes.version',
     )
     .limit(limit)
     .offset(offset)
@@ -95,7 +97,7 @@ const insertRecord = (params) =>
     });
 
 const updateRecord = ({
-  id,
+  id = null,
   images,
   ingredients,
   username,
@@ -103,10 +105,11 @@ const updateRecord = ({
   created,
   directions,
   recipe_id,
+  version = 0,
   ...rest
 }) =>
   knex('recipes')
-    .update(rest)
+    .update({ version: version + 1, ...rest })
     .where({ recipe_id })
     .then((succ) => succ)
     .catch((err) => {

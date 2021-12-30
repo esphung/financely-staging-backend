@@ -17,10 +17,10 @@ const storeMeal = require('functions/storeMeal');
 router.put('/:recipe_id', ({ body, params }, res) => {
   // console.log({body});
   // console.log({params});
-  RecipesController.updateRecord({ ...body })
+  RecipesController.updateRecord(body)
     .then((result) => {
       // console.log({result});
-      res.jsonp({ success: true, data: result });
+      res.jsonp({ success: +!!result, data: result });
     })
     .catch((err) => {
       console.log({ err });
