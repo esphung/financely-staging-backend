@@ -14,6 +14,83 @@ const ImagesController = require('controllers/ImagesController');
 
 const storeMeal = require('functions/storeMeal');
 
+router.get('/search', async ({ query }, res) => {
+  console.log({query});
+  const { chef_id, name, limit = 100, offset = 0, ...rest } = query;
+
+  let recipesCountRes = await RecipesController.getCount({ chef_id, name });
+  // console.log({recipesCountRes})
+
+  RecipesController.searchQuery({
+    chef_id,
+    name,
+    limit: +limit,
+    offset: +offset,
+    recipesCountRes,
+    // ...rest,
+  })
+    .then(async (rows) => {
+      // console.log({ rows });
+      // console.log({ chef_id, name, limit, offset, ...rest });
+
+      if (rows?.length <= 0)
+        res.jsonp({
+          message: 'No results found',
+          data: rows,
+          success: true,
+          limit: +limit,
+          recipesCountRes,
+        });
+
+      let i = 0;
+      let arr = [];
+      for (i = 0; i < rows?.length; i++) {
+        let temp = { ...rows[i] };
+        temp = await IngredientsController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((ingredients) => ({ ...temp, ingredients }));
+
+        temp = await DirectionsController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((directions) => ({ ...temp, directions }));
+
+        temp = await ImagesController.selectSample({
+          recipe_id: temp?.recipe_id,
+        }).then((images) => ({ ...temp, images }));
+        // console.log('temp', temp);
+
+        arr[i] = temp;
+
+        let nextOffset = +offset + +arr.length;
+
+        if (i >= rows?.length - 1 || !rows) {
+          let result = {
+            data: arr,
+            // nextOffset,
+            success: true, // rows?.length > 0,
+            // count: countResult?.count,
+            // hasMore:
+            //   countResult?.count <= 0 ||
+            //   rows?.length <= 0 ||
+            //   !(nextOffset >= countResult?.count),
+            limit: +limit,
+            // offset,
+
+            results: rows?.length,
+            recipesCountRes,
+          };
+          // console.log(JSON.stringify(result, null, 2));
+          res.jsonp(result);
+          return;
+        }
+      }
+    })
+    .catch((err) => {
+      console.log({ err });
+      res.jsonp({ success: false, err });
+    });
+});
+
 router.put('/:recipe_id', ({ body, params }, res) => {
   // console.log({body});
   // console.log({params});
@@ -39,9 +116,15 @@ router.get('/counts', async ({ query }, res) => {
 });
 
 router.get('/feed', async ({ query }, res) => {
-  const { offset = 0, limit = 10, chef_id, visibility = 'PUBLIC', voided = 0 } = query;
+  const {
+    offset = 0,
+    limit = 10,
+    chef_id,
+    visibility = 'PUBLIC',
+    voided = 0,
+  } = query;
   let countResult = await RecipesController.getCount({ chef_id, visibility });
-  console.log(countResult)
+  console.log(countResult);
   RecipesController.listAllForFeed({
     offset: Number(offset),
     limit: Number(limit),
