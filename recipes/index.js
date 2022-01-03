@@ -92,11 +92,11 @@ router.get('/search', async ({ query }, res) => {
 });
 
 router.put('/:recipe_id', ({ body, params }, res) => {
-  // console.log({body});
-  // console.log({params});
+  console.log({body});
+  console.log({params});
   RecipesController.updateRecord(body)
     .then((result) => {
-      // console.log({result});
+      console.log({result});
       res.jsonp({ success: +!!result, data: result });
     })
     .catch((err) => {
@@ -124,7 +124,7 @@ router.get('/feed', async ({ query }, res) => {
     voided = 0,
   } = query;
   let countResult = await RecipesController.getCount({ chef_id, visibility });
-  console.log(countResult);
+  // console.log(countResult);
   RecipesController.listAllForFeed({
     offset: Number(offset),
     limit: Number(limit),

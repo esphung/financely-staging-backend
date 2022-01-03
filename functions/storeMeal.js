@@ -44,11 +44,13 @@ async function storeMeal(recipe) {
   let temp = { success: false, message: '' };
   let { ingredients, directions, ...rest } = recipe;
   let recipe_id = hashids.encode(String(Date.now()));
+  console.log('recipe_id', recipe_id);
   let params = {
     ...rest,
     recipe_id,
   };
   let recipeResult = await RecipesController.insertRecord(params);
+  console.log({recipeResult});
   let newRecipe = await RecipesController.selectRecord({ recipe_id });
   temp = {
     ...temp,

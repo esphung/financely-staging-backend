@@ -154,7 +154,7 @@ const insertRecord = (params) =>
     .ignore()
     .then((succ) => succ)
     .catch((err) => {
-      err;
+      return err;
     });
 
 const updateRecord = ({
