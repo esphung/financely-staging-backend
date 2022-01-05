@@ -48,6 +48,7 @@ const selectSample = (query) =>
       'images.id',
       'images.url',
       'images.recipe_id',
+      'images.type'
     )
     .where(query)
     .then((succ) => succ)

@@ -40,9 +40,9 @@ const test_recipe = {
 };
 
 async function storeMeal(recipe) {
-  console.log('recipe: ', recipe);
+  console.log('recipe?.images: ', JSON.stringify(recipe?.images));
   let temp = { success: false, message: '' };
-  let { ingredients, directions, ...rest } = recipe;
+  let { images, ingredients, directions, ...rest } = recipe;
   let recipe_id = hashids.encode(String(Date.now()));
   console.log('recipe_id', recipe_id);
   let params = {
