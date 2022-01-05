@@ -40,7 +40,7 @@ const test_recipe = {
 };
 
 async function storeMeal(recipe) {
-  // console.log('recipe: ', recipe);
+  console.log('recipe: ', recipe);
   let temp = { success: false, message: '' };
   let { ingredients, directions, ...rest } = recipe;
   let recipe_id = hashids.encode(String(Date.now()));
@@ -65,7 +65,7 @@ async function storeMeal(recipe) {
       chef_id: recipe.chef_id,
       ingredient_id: hashids.encode(String(Date.now() + index)),
     }));
-    // console.log('fieldsToInsert: ', fieldsToInsert);
+    console.log('fieldsToInsert: ', fieldsToInsert);
     let newIngredientsResult = await IngredientsController.insertRecord(
       fieldsToInsert,
     );
@@ -95,7 +95,7 @@ async function storeMeal(recipe) {
       message: (temp.message += ' Added directions.'),
     };
   }
-  // console.log('temp: ', temp);
+  console.log('temp: ', temp);
   return temp;
 }
 
